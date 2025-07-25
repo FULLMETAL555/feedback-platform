@@ -89,6 +89,7 @@ public class FeedbackService {
         productDTO.setId(feedback.getProduct().getId());
         productDTO.setName(feedback.getProduct().getName());
         productDTO.setDescription(feedback.getProduct().getDescription());
+        productDTO.setClientId(feedback.getProduct().getClient().getId());
 
         FeedbackResponseDTO response = new FeedbackResponseDTO();
         response.setId(feedback.getId());

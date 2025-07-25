@@ -45,6 +45,7 @@ public class ProductService {
         responseDTO.setId(saved.getId());
         responseDTO.setName(saved.getName());
         responseDTO.setDescription(saved.getDescription());
+        responseDTO.setClientId(saved.getClient().getId());
 
         return responseDTO;
     }

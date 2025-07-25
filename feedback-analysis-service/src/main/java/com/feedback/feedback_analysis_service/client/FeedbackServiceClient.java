@@ -1,5 +1,6 @@
 package com.feedback.feedback_analysis_service.client;
 
+import com.feedback.feedback_analysis_service.dto.CategorySummaryDTO;
 import com.feedback.feedback_analysis_service.dto.FeedbackDTO;
 import com.feedback.feedback_analysis_service.dto.ProductDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -27,4 +28,8 @@ public interface FeedbackServiceClient {
             @PathVariable("productId") Long productId,
             @RequestBody List<String> summaries
     );
+
+    void saveCategorySummary(CategorySummaryDTO categorySummaryDTO);
+
+    List<String> getExistingCategories(Long productId);
 }
