@@ -16,7 +16,6 @@ import java.util.Optional;
 
 public interface FeedbackRepository extends JpaRepository<Feedback,Long> {
 
-    List<Feedback> findByProductId(Long productId);
     List<Feedback> findBySentimentAndProductId(String sentiment, Long productId, Pageable pageable);
 
     @Query("SELECT new com.feedback.feedback_service.dto.FeedbackSentimentSummary(f.sentiment, COUNT(f)) FROM Feedback f WHERE f.product.id = :productId GROUP BY f.sentiment")
@@ -37,4 +36,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback,Long> {
             "WHERE p.client = :client AND f.submittedAt >= :fromDate " +
             "GROUP BY f.sentiment")
     List<Object[]> countRecentFeedbacksBySentimentForClient(@Param("client") Client client, @Param("fromDate") LocalDateTime fromDate);
+
+
+    List<Feedback> findByProductId(@Param("productId") Long productId);
+
 }

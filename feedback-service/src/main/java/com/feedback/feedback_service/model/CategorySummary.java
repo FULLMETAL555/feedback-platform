@@ -1,4 +1,4 @@
-package com.feedback.feedback_analysis_service.model;
+package com.feedback.feedback_service.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -67,4 +67,3 @@ public class CategorySummary {
         this.category = category;
     }
 }
-

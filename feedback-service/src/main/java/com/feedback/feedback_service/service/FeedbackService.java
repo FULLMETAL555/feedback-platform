@@ -102,4 +102,12 @@ public class FeedbackService {
 
         return response;
     }
+
+    public List<Feedback> getFeedbackByProductId(Long productId) {
+
+          List<Feedback> feedback= feedbackRepository.findByProductId(productId);
+
+        return feedback;
+
+    }
 }

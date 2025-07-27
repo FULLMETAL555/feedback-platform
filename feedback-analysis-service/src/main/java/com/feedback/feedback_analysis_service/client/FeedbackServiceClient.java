@@ -29,7 +29,11 @@ public interface FeedbackServiceClient {
             @RequestBody List<String> summaries
     );
 
-    void saveCategorySummary(CategorySummaryDTO categorySummaryDTO);
+    // Add HTTP method annotation for this method
+    @PostMapping("/feedback/category-summary")
+    void saveCategorySummary(@RequestBody CategorySummaryDTO categorySummaryDTO);
 
-    List<String> getExistingCategories(Long productId);
+    // Add HTTP method annotation for this method
+    @GetMapping("/feedback/categories/{productId}")
+    List<String> getExistingCategories(@PathVariable("productId") Long productId);
 }

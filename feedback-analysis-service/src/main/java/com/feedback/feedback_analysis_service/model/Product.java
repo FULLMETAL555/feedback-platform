@@ -1,8 +1,8 @@
 package com.feedback.feedback_analysis_service.model;
 
 
-import com.feedback.feedback_service.model.Client;
-import com.feedback.feedback_service.model.Feedback;
+import com.feedback.feedback_analysis_service.model.Client;
+import com.feedback.feedback_analysis_service.model.Feedback;
 import jakarta.persistence.*;
 
 import java.util.List;

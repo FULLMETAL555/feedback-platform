@@ -1,6 +1,5 @@
-package com.feedback.feedback_analysis_service.model;
+package com.feedback.feedback_service.model;
 
-import com.feedback.feedback_analysis_service.model.Product;
 import jakarta.persistence.*;
 import lombok.Data;
 
