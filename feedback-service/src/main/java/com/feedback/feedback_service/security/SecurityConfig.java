@@ -21,23 +21,9 @@ public class SecurityConfig {
         http.
                 csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/clients/register",
-                                "/api/clients/login",
-                                "/api/clients/refresh",
-                                // Swagger UI resources
-                                "/api/swagger-ui/**",
-                                "/api/swagger-ui.html",
-                                "/api/v3/api-docs/**",
-                                "/api/v3/api-docs.yaml",
-                                "/api/v3/api-docs",
-                                // Additional common Swagger paths
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                ).addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        .anyRequest().permitAll()  // Allow all requests
+                );
+        // Removed the filter completely
         return http.build();
     }
 }

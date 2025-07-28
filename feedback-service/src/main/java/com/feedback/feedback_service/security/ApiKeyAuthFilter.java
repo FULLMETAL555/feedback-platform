@@ -17,50 +17,81 @@ import java.util.Collections;
 @Component
 public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
-    private static final int KEY_EXPIRY_DAY =30;
+    private static final int KEY_EXPIRY_DAY = 30;
 
     @Autowired
     private ClientService clientService;
 
     @Autowired
-    private  RateLimiterService rateLimiterService;
+    private RateLimiterService rateLimiterService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException{
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        // Get the full path for debugging
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        System.out.println("=== ApiKeyAuthFilter Debug ===");
+        System.out.println("Request Path: " + path);
+        System.out.println("Request Method: " + method);
+        System.out.println("Context Path: " + request.getContextPath());
+        System.out.println("Servlet Path: " + request.getServletPath());
 
         // Allow public endpoints to bypass the filter
-        String path = request.getRequestURI();
-        if (path.startsWith("/api/clients/register") ||
-                path.startsWith("/api/clients/login") ||
-                path.startsWith("/api/clients/refresh") ||
-                path.startsWith("/api/v3/api-docs") ||
-                path.startsWith("/api/swagger-ui")) {
-            System.out.println("Out");
+        if (isPublicEndpoint(path)) {
+            System.out.println("✅ Public endpoint - bypassing filter");
             filterChain.doFilter(request, response);
             return;
         }
-        String apiKey=request.getHeader("X-API-KEY");
-        System.out.println("Request apikey : "+apiKey);
+        // Check if this is the analysis service (you can use port or path logic)
+        String serverName = request.getServerName();
+        int serverPort = request.getServerPort();
+        System.out.println(serverName+" "+serverPort);
+        // If this is the analysis service (port 9097), allow all requests
+        if (serverPort == 9099) {
+            System.out.println("✅ Analysis service - bypassing filter");
+            filterChain.doFilter(request, response);
+            return;
+        }
+        String apiKey = request.getHeader("X-API-KEY");
+        System.out.println("Request apikey: " + apiKey);
 
-        if(apiKey==null || !clientService.isValidKey(apiKey)){
-            System.out.println("IN");
-
+        if (apiKey == null || !clientService.isValidKey(apiKey)) {
+            System.out.println("❌ Invalid or missing API key");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: Invalid or missing API key");
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Unauthorized: Invalid or missing API key\"}");
             return;
         }
 
-
-        // 🔒 Apply rate limit
+        // Apply rate limit
         if (!rateLimiterService.isAllowed(apiKey)) {
-            response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
-            response.getWriter().write("Rate limit exceeded. Try again later.");
+            System.out.println("❌ Rate limit exceeded");
+            response.setStatus(429); // Use proper rate limit status code
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Rate limit exceeded. Try again later.\"}");
             return;
         }
 
+        System.out.println("✅ API key valid - proceeding");
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(apiKey, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(String path) {
+        // More robust path matching
+        return path.equals("/api/clients/register") ||
+                path.equals("/api/clients/login") ||
+                path.equals("/api/clients/refresh") ||
+                path.startsWith("/api/v3/api-docs") ||
+                path.startsWith("/api/swagger-ui") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/v3/api-docs") ||
+                // Add analysis service endpoints
+                path.startsWith("/api/analysis/") ||
+                path.startsWith("/analysis/");
     }
 }
