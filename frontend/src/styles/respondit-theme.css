@@ -1,0 +1,158 @@
+/* RESPONDIT Brand System */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* RESPONDIT Brand Colors */
+  --respondit-gold: #a3946a;
+  --respondit-brown: #67533b;
+  --respondit-dark: #493324;
+  --respondit-light: #f5f2e8;
+  --respondit-white: #ffffff;
+  
+  /* Typography */
+  --font-main: 'Montserrat', sans-serif;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  --spacing-xxl: 4rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(73, 51, 36, 0.1);
+  --shadow-md: 0 4px 12px rgba(73, 51, 36, 0.15);
+  --shadow-lg: 0 8px 24px rgba(73, 51, 36, 0.2);
+  --shadow-xl: 0 12px 32px rgba(73, 51, 36, 0.25);
+}
+
+/* RESPONDIT Logo Component */
+.respondit-logo {
+  font-family: var(--font-main);
+  font-weight: var(--font-weight-light);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--respondit-gold);
+}
+
+.respondit-logo.small { font-size: 1.2rem; }
+.respondit-logo.medium { font-size: 1.8rem; }
+.respondit-logo.large { font-size: 3rem; }
+.respondit-logo.xl { font-size: 4rem; }
+
+/* Button System */
+.btn {
+  font-family: var(--font-main);
+  font-weight: var(--font-weight-medium);
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary {
+  background-color: var(--respondit-gold);
+  color: var(--respondit-dark);
+}
+
+.btn-primary:hover {
+  background-color: var(--respondit-brown);
+  color: var(--respondit-white);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--respondit-gold);
+  border: 2px solid var(--respondit-gold);
+}
+
+.btn-secondary:hover {
+  background-color: var(--respondit-gold);
+  color: var(--respondit-dark);
+}
+
+.btn-large {
+  padding: 16px 32px;
+  font-size: 1.1rem;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+/* Card System */
+.card {
+  background: var(--respondit-white);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Layout System */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.container-wide {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.section {
+  padding: var(--spacing-xl) 0;
+}
+
+.section-lg {
+  padding: var(--spacing-xxl) 0;
+}
+
+/* Responsive Grid */
+.grid {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 768px) {
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}

@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class ClientService {
+public class ClientService  {
 
     @Autowired
     private ClientRepository clientRepository;
