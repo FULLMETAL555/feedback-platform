@@ -47,4 +47,13 @@ springdoc:
     enabled: true
     path: /swagger-ui.html
 
-GOOGLE_API_KEY: AIzaSyCGIDNDmAGNA9OweEohN5RU5U2utt8eYLo
+
+google:
+  api:
+    key: AIzaSyCjnQjPTvFK7V5vO56t4vQgm8ASZbCJZtU
+
+feedback:
+  api:
+    key: 5T3B2lqEL3SEoBFrPTTf78KDP58XoyCq84smpEnxh8w
+  service:
+    url: http://localhost:9099/api  # Change this to your feedback service base URL

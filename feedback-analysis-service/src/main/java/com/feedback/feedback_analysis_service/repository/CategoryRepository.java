@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<Category,Long> {
     List<Category> findByProductId(Long productId);
     Optional<Category> findByNameAndProductId(String name, Long productId);
+
+    void deleteByProductId(Long id);
 }

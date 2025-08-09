@@ -57,11 +57,11 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         int serverPort = request.getServerPort();
         System.out.println(serverName+" "+serverPort);
         // If this is the analysis service (port 9097), allow all requests
-        if (serverPort == 9099) {
-            System.out.println("✅ Analysis service - bypassing filter");
-            filterChain.doFilter(request, response);
-            return;
-        }
+//        if (serverPort == 9099) {
+//            System.out.println("✅ Analysis service - bypassing filter");
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
         String apiKey = request.getHeader("X-API-KEY");
         System.out.println("Request apikey: " + apiKey);
 
@@ -100,6 +100,8 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
                 path.startsWith("/v3/api-docs") ||
                 // Add analysis service endpoints
                 path.startsWith("/api/analysis/") ||
-                path.startsWith("/analysis/");
+                path.startsWith("/analysis/") ||
+                path.startsWith("/api/auth/signin") ||
+                path.startsWith("/api/auth/signup");
     }
 }

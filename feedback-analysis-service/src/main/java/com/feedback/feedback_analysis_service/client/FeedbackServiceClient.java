@@ -1,5 +1,6 @@
 package com.feedback.feedback_analysis_service.client;
 
+import com.feedback.feedback_analysis_service.config.FeignClientConfig;
 import com.feedback.feedback_analysis_service.dto.CategorySummaryDTO;
 import com.feedback.feedback_analysis_service.dto.FeedbackDTO;
 import com.feedback.feedback_analysis_service.dto.ProductDTO;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "feedback-service", url = "http://localhost:9099/api")
+@FeignClient(name = "feedback-service", url = "${feedback.service.url}",configuration = FeignClientConfig.class)
 public interface FeedbackServiceClient {
 
     @GetMapping("/feedback/product/{productId}")

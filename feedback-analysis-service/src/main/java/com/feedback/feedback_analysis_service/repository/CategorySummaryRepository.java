@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface CategorySummaryRepository extends JpaRepository<CategorySummary, Long> {
     List<CategorySummary> findByProductId(Long id);
+
+    void deleteAllByProductId(Long id);
 }

@@ -16,9 +16,9 @@ public class AIUtils {
 
     private final Client geminiClient;
 
-    public AIUtils(@Value("${GOOGLE_API_KEY}") String apiKey) {
+    public AIUtils(@Value("${google.api.key}") String apiKey) {
         this.geminiClient = Client.builder()
-                .apiKey("AIzaSyCGIDNDmAGNA9OweEohN5RU5U2utt8eYLo")
+                .apiKey(apiKey)
                 .build();
     }
 
@@ -41,67 +41,38 @@ public class AIUtils {
             If none of the categories match the feedback meaningfully, reply with: "No Match".
             Only return the category name or "No Match".
             """.formatted(feedbackText, String.join(", ", categories));
+            log.info(prompt);
 
-        try {
-            GenerateContentResponse response = geminiClient.models.generateContent(
-                    "gemini-2.5-flash",
-                    prompt,
-                    null
-            );
+            int retry=3;
 
-            String result = response.text();
-            return result != null ? result.trim() : "No Match";
-        } catch (Exception e) {
-            log.error("Error classifying feedback: {}", e.getMessage(), e);
-            return "No Match";
+        while(retry-- >0){
+            try {
+                GenerateContentResponse response = geminiClient.models.generateContent(
+                        "gemini-2.5-flash",
+                        prompt,
+                        null
+                );
+
+                String result = response.text();
+                return result != null ? result.trim() : "No Match";
+            } catch (Exception e) {
+                log.error("Error classifying feedback: {}", e.getMessage(), e);
+                if (e.getMessage() != null && e.getMessage().contains("429") && retry > 0) {
+                    try {
+                        log.warn("Rate limit hit. Waiting 15 seconds before continuing...");
+                        Thread.sleep(15000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+
+            }
         }
+        return "No Match";
     }
 
-    /**
-     * Summarizes all feedbacks that are relevant to a given category.
-     */
-    public String summarizeFeedbackForCategory(String category, List<FeedbackDTO> feedbacks) {
-        // First classify feedbacks, then filter by category
-        List<String> categorizedMessages = feedbacks.stream()
-                .filter(fb -> {
-                    String classified = classifyFeedbackIntoCategory(
-                            List.of(category),
-                            fb.getMessage()
-                    );
-                    return category.equalsIgnoreCase(classified.trim());
-                })
-                .map(FeedbackDTO::getMessage)
-                .collect(Collectors.toList());
 
-        if (categorizedMessages.isEmpty()) {
-            return "No specific feedback available for this category.";
-        }
-
-        StringBuilder prompt = new StringBuilder();
-        prompt.append("Summarize the following user feedbacks for the category: ")
-                .append(category).append(".\n")
-                .append("Feedbacks:\n");
-
-        for (String msg : categorizedMessages) {
-            prompt.append("- ").append(msg).append("\n");
-        }
-
-        prompt.append("\nProvide a concise 2-3 line summary highlighting key points, common themes, and overall sentiment.");
-
-        try {
-            GenerateContentResponse response = geminiClient.models.generateContent(
-                    "gemini-2.5-flash",
-                    prompt.toString(),
-                    null
-            );
-
-            String text = response.text();
-            return text != null ? text.trim() : "No summary generated.";
-        } catch (Exception e) {
-            log.error("Error summarizing feedback for category '{}': {}", category, e.getMessage(), e);
-            return "Summary not available due to an error.";
-        }
-    }
     public String generateSummary(String prompt) {
         try {
             GenerateContentResponse response = geminiClient.models.generateContent(
