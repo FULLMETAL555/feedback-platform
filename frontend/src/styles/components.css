@@ -1,0 +1,30 @@
+/* ===========================
+   Basic Card Grid Utilities
+   =========================== */
+
+.card {
+  background: var(--respondit-white);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(73,51,36,0.06);
+  margin-bottom: 1.5rem;
+  transition: box-shadow 0.3s;
+}
+.card:hover {
+  box-shadow: 0 8px 32px rgba(73,51,36,0.15);
+  transform: translateY(-2px);
+}
+
+/* Responsive grid utilities: */
+.grid {
+  display: grid;
+  gap: 2rem;
+}
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 900px) {
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
