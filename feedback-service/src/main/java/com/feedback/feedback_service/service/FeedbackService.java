@@ -2,14 +2,17 @@ package com.feedback.feedback_service.service;
 
 
 import com.feedback.feedback_service.dto.*;
+import com.feedback.feedback_service.model.Category;
 import com.feedback.feedback_service.model.Client;
 import com.feedback.feedback_service.model.Feedback;
 import com.feedback.feedback_service.model.Product;
+import com.feedback.feedback_service.repository.CategoryRepository;
 import com.feedback.feedback_service.repository.ClientRepository;
 import com.feedback.feedback_service.repository.FeedbackRepository;
 import com.feedback.feedback_service.repository.ProductRepository;
 import com.feedback.feedback_service.util.HashUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
@@ -35,6 +38,9 @@ public class FeedbackService {
 
     @Autowired
     private AnonymizationClient anonymizationClient;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     public FeedbackResponseDTO saveFeedback(FeedbackRequestDTO dto, Product product){
         Feedback feedback=new Feedback();
@@ -109,5 +115,13 @@ public class FeedbackService {
 
         return feedback;
 
+    }
+    public ResponseEntity<Object> updateFeedbackCategory(Long id, Long categoryId) {
+        return feedbackRepository.findById(id).map(feedback -> {
+            Category categoryRef = categoryRepository.findById(categoryId).orElseThrow(()->new RuntimeException("Category not found"));
+            feedback.setCategory(categoryRef);
+            feedbackRepository.save(feedback);
+            return ResponseEntity.noContent().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

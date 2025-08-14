@@ -10,7 +10,15 @@ public class FeedbackDTO {
     private LocalDateTime submittedAt;
     private String sentiment;
     private ProductDTO product;
+    private Long categoryId;
 
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
 
     // Getters and setters
     public Long getId() { return id; }

@@ -61,6 +61,12 @@ public class FeedbackController {
 
     }
 
+    @PutMapping("/{id}/category")
+    public ResponseEntity<Object> updateFeedbackCategory(@PathVariable Long id, @RequestParam Long categoryId) {
+        return feedbackService.updateFeedbackCategory(id,categoryId);
+    }
+
+
 
     private FeedbackResponseDTO convertToDTO(Feedback feedback) {
         FeedbackResponseDTO dto = new FeedbackResponseDTO();

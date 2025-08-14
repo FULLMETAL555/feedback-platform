@@ -1,38 +1,35 @@
 // ====================================
-// authService.js
+// authService.js - Clean, robust Auth Service
 // ====================================
 
 import api from "./api"; // axios instance
 
-export const authService = {
+const authService = {
   signup: async (name, email, password) => {
     try {
       const res = await api.post("/auth/signup", { name, email, password });
-      return res.data; // Expect { apiKey: "xxx" }
+      // Depending on your backend, you may want to auto-login here by saving session
+      // For now, just return the response data (e.g. { apiKey: "xxx" })
+      return res.data;
     } catch (err) {
       throw new Error(err.response?.data?.message || "Sign up failed");
     }
   },
 
   login: async (email, password) => {
-    // Call the backend login API
-    const res = await api.post("/auth/signin", { email, password });
+    try {
+      // Make sure this path matches your backend; adjust "/auth/signin" if needed
+      const res = await api.post("/auth/signin", { email, password });
+      const data = res.data;
 
-    const data = res.data;
+      // Wrap flat user info in a user object for consistency
+      const { token, clientId, email: userEmail, name, apikey } = data;
+      const user = { clientId, email: userEmail, name, apikey };
 
-    // Wrap flat user fields in 'user' object for consistency
-    const { token, clientId, email: userEmail, name, apikey } = data;
-
-    // Construct user object explicitly
-    const user = {
-      clientId,
-      email: userEmail,
-      name,
-      apikey,
-    };
-
-    // Return consistent structure
-    return { token, user };
+      return { token, user };
+    } catch (err) {
+      throw new Error(err.response?.data?.message || "Login failed");
+    }
   },
 
   saveSession: (token, user) => {
@@ -44,6 +41,7 @@ export const authService = {
   logout: () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("authUser");
+    localStorage.removeItem("respondit_api_key");
   },
 
   getToken: () => localStorage.getItem("authToken"),

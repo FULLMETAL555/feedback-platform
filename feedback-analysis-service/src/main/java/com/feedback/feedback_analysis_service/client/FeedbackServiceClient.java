@@ -37,4 +37,8 @@ public interface FeedbackServiceClient {
     // Add HTTP method annotation for this method
     @GetMapping("/feedback/categories/{productId}")
     List<String> getExistingCategories(@PathVariable("productId") Long productId);
+
+    @PutMapping("/feedback/{id}/category")
+    void updateFeedbackCategory(@PathVariable("id") Long feedbackId, @RequestParam("categoryId") Long categoryId);
+
 }

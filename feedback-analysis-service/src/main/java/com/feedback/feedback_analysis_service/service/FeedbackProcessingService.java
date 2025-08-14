@@ -14,7 +14,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,23 +29,27 @@ public class FeedbackProcessingService {
     private final AIUtils aiUtils;
     private final CategoryGenerationUtil categoryGenerationUtil;
 
-    private static final double UNCLASSIFIED_THRESHOLD = 0.10; // 10% unclassified
+    private static final double UNCLASSIFIED_THRESHOLD = 0.10;
 
+    /**
+     * Main entry point: Processes all feedback for a given product.
+     */
     @Transactional
     public void processFeedbackForProduct(Long productId) {
         Optional<Product> productOpt = productRepository.findById(productId);
         if (productOpt.isEmpty()) return;
         Product product = productOpt.get();
 
+        // Get feedbacks for this product from FeedbackService
         List<FeedbackDTO> allFeedbacks = feedbackServiceClient.getFeedbacksForProduct(productId);
-        if (allFeedbacks.size() < 4) return;
+
+        if (allFeedbacks.size() < 4) return; // Insufficient sample size
 
         List<Category> existingCategories = categoryRepository.findByProductId(productId);
 
         if (existingCategories.isEmpty()) {
             processInitialFeedbacks(product, allFeedbacks);
         } else {
-            // Hybrid/adaptive: check how many feedbacks cannot be classified with existing categories
             boolean sufficientCoverage = isCategoryCoverageSufficient(
                     existingCategories.stream().map(Category::getName).toList(),
                     allFeedbacks, UNCLASSIFIED_THRESHOLD
@@ -60,40 +63,22 @@ public class FeedbackProcessingService {
         }
     }
 
+    /**
+     * Determines if existing categories cover feedback well enough (calls AI only for unclassified items)
+     */
     private boolean isCategoryCoverageSufficient(List<String> existingCategoryNames, List<FeedbackDTO> feedbacks, double thresholdPercent) {
         long unclassifiedCount = feedbacks.stream()
+                .filter(f -> f.getCategoryId() == null) // Only look at feedback not yet classified
                 .filter(feedback -> {
                     String classified = aiUtils.classifyFeedbackIntoCategory(existingCategoryNames, feedback.getMessage());
                     return "No Match".equalsIgnoreCase(classified.trim());
-                })
-                .count();
-
+                }).count();
         double unclassifiedRatio = (double) unclassifiedCount / feedbacks.size();
         log.info("Unclassified feedbacks: {}/{} = {}%", unclassifiedCount, feedbacks.size(), unclassifiedRatio * 100);
         return unclassifiedRatio <= thresholdPercent;
     }
 
-    // Called only if not enough categories or coverage is poor
-    private void processCategoryRegeneration(Product product, List<FeedbackDTO> allFeedbacks) {
-        categorySummaryRepository.deleteAllByProductId(product.getId());
-        categoryRepository.deleteByProductId(product.getId());
-        List<String> newCategoryNames = categoryGenerationUtil.generateCategories(
-                product.getName(),
-                product.getDescription(),
-                allFeedbacks.stream().map(FeedbackDTO::getMessage).toList()
-        );
-        List<Category> newCategories = newCategoryNames.stream()
-                .map(catName -> {
-                    Category cat = new Category();
-                    cat.setProduct(product);
-                    cat.setName(catName);
-                    return categoryRepository.save(cat);
-                })
-                .toList();
-        generateAndSaveSummaries(product, newCategories, allFeedbacks);
-    }
-
-    // Called only on very first batch, or after regeneration
+    // Called only on first batch of feedbacks or after category regeneration
     private void processInitialFeedbacks(Product product, List<FeedbackDTO> feedbacks) {
         List<String> generatedCategories = categoryGenerationUtil.generateCategories(
                 product.getName(),
@@ -108,10 +93,36 @@ public class FeedbackProcessingService {
                     return categoryRepository.save(category);
                 })
                 .collect(Collectors.toList());
+        // Assign category and generate summaries
         generateAndSaveSummaries(product, savedCategories, feedbacks);
     }
 
-    // Standard incremental summary updates for existing category set
+    // Called only if not enough categories or coverage is poor
+    private void processCategoryRegeneration(Product product, List<FeedbackDTO> allFeedbacks) {
+        // Remove old summaries and categories
+        categorySummaryRepository.deleteAllByProductId(product.getId());
+        categoryRepository.deleteByProductId(product.getId());
+        // AI: Generate new categories
+        List<String> newCategoryNames = categoryGenerationUtil.generateCategories(
+                product.getName(),
+                product.getDescription(),
+                allFeedbacks.stream().map(FeedbackDTO::getMessage).toList()
+        );
+        List<Category> newCategories = newCategoryNames.stream()
+                .map(catName -> {
+                    Category cat = new Category();
+                    cat.setProduct(product);
+                    cat.setName(catName);
+                    return categoryRepository.save(cat);
+                }).toList();
+        // Assign and summarize
+        generateAndSaveSummaries(product, newCategories, allFeedbacks);
+    }
+
+    /**
+     * Incrementally updates summaries & classifies new feedbacks only.
+     * No repeated AI for already classified feedback.
+     */
     private void processIncrementalFeedbacks(Product product, List<Category> existingCategories,
                                              List<FeedbackDTO> allFeedbacks) {
         List<CategorySummary> existingSummaries = categorySummaryRepository.findByProductId(product.getId());
@@ -120,24 +131,71 @@ public class FeedbackProcessingService {
                         summary -> summary.getCategory().getId(),
                         summary -> summary
                 ));
+        Map<String, Category> categoryMap = existingCategories.stream()
+                .collect(Collectors.toMap(Category::getName, c -> c));
+
+        Map<String, List<FeedbackDTO>> categorizedFeedbacks =
+                classifyFeedbacksIntoCategories(existingCategories.stream().map(Category::getName).toList(),
+                        allFeedbacks, categoryMap);
 
         for (Category category : existingCategories) {
             CategorySummary existingSummary = summaryByCategoryId.get(category.getId());
-            updateOrCreateSummary(product, category, existingSummary, allFeedbacks);
+            List<FeedbackDTO> feedbacksForCategory = categorizedFeedbacks.getOrDefault(category.getName(), Collections.emptyList());
+            updateOrCreateSummary(product, category, existingSummary, feedbacksForCategory);
         }
     }
 
-    // Creates or updates a summary for a given category
+    /**
+     * Classifies feedbacks into categories:
+     * - Feedbacks with existing categoryId are grouped directly.
+     * - New/unclassified feedbacks are passed to AI, assigned a category, and the result is persisted in FeedbackService.
+     */
+    private Map<String, List<FeedbackDTO>> classifyFeedbacksIntoCategories(
+            List<String> categories, List<FeedbackDTO> feedbacks, Map<String, Category> categoryMap) {
+        Map<String, List<FeedbackDTO>> categorizedFeedbacks = new HashMap<>();
+        categories.forEach(category -> categorizedFeedbacks.put(category, new ArrayList<>()));
+
+        for (FeedbackDTO feedback : feedbacks) {
+            String classifiedCategory = null;
+            if (feedback.getCategoryId() != null) {
+                // Find category from category ID
+                Category cat = categoryMap.values().stream()
+                        .filter(c -> c.getId().equals(feedback.getCategoryId()))
+                        .findFirst().orElse(null);
+                classifiedCategory = (cat != null) ? cat.getName() : null;
+            } else {
+                // Call AI for unclassified feedback
+                classifiedCategory = aiUtils.classifyFeedbackIntoCategory(categories, feedback.getMessage()).trim();
+                // Persist category ID if matched
+                if (!"No Match".equalsIgnoreCase(classifiedCategory) && categoryMap.containsKey(classifiedCategory)) {
+                    Long catId = categoryMap.get(classifiedCategory).getId();
+                    feedback.setCategoryId(catId);
+                    // Update the FeedbackService entry (assign/persist category)
+                    try {
+                        feedbackServiceClient.updateFeedbackCategory(feedback.getId(), catId);
+                    } catch (Exception e) {
+                        log.warn("Failed to persist categoryId to FeedbackService: {}", e.getMessage());
+                    }
+                }
+            }
+            if (classifiedCategory != null &&
+                    !"No Match".equalsIgnoreCase(classifiedCategory) &&
+                    categories.contains(classifiedCategory)) {
+                categorizedFeedbacks.get(classifiedCategory).add(feedback);
+            }
+        }
+        return categorizedFeedbacks;
+    }
+
+    /**
+     * Creates or updates category summary for a batch of feedbacks belonging to the category.
+     */
     private void updateOrCreateSummary(Product product, Category category, CategorySummary existingSummary,
-                                       List<FeedbackDTO> allFeedbacks) {
-        List<FeedbackDTO> categoryFeedbacks = classifyFeedbacksForCategory(category.getName(), allFeedbacks);
+                                       List<FeedbackDTO> categoryFeedbacks) {
         if (existingSummary != null) {
             if (!categoryFeedbacks.isEmpty()) {
                 String updatedSummary = aiUtils.generateIncrementalSummary(
-                        category.getName(),
-                        categoryFeedbacks,
-                        existingSummary.getSummaryText()
-                );
+                        category.getName(), categoryFeedbacks, existingSummary.getSummaryText());
                 existingSummary.setSummaryText(updatedSummary);
                 categorySummaryRepository.save(existingSummary);
             }
@@ -153,11 +211,16 @@ public class FeedbackProcessingService {
         }
     }
 
-    // Main summary generation for a batch of categories
+    /**
+     * Orchestrates category assignment and AI summary generation for a new or regenerated category set.
+     */
     private void generateAndSaveSummaries(Product product, List<Category> categories,
                                           List<FeedbackDTO> feedbacks) {
-        List<String> categoryNames = categories.stream().map(Category::getName).toList();
-        Map<String, List<FeedbackDTO>> categorizedFeedbacks = classifyFeedbacksIntoCategories(categoryNames, feedbacks);
+        Map<String, Category> categoryMap = categories.stream()
+                .collect(Collectors.toMap(Category::getName, c -> c));
+        Map<String, List<FeedbackDTO>> categorizedFeedbacks =
+                classifyFeedbacksIntoCategories(categories.stream().map(Category::getName).toList(),
+                        feedbacks, categoryMap);
 
         for (Category category : categories) {
             List<FeedbackDTO> categoryFeedbacks = categorizedFeedbacks.getOrDefault(
@@ -165,7 +228,6 @@ public class FeedbackProcessingService {
             String summary = categoryFeedbacks.isEmpty()
                     ? "No specific feedback available for this category."
                     : generateSummaryForCategorizedFeedbacks(category.getName(), categoryFeedbacks);
-
             CategorySummary categorySummary = new CategorySummary();
             categorySummary.setProduct(product);
             categorySummary.setCategory(category);
@@ -174,28 +236,9 @@ public class FeedbackProcessingService {
         }
     }
 
-    private List<FeedbackDTO> classifyFeedbacksForCategory(String categoryName, List<FeedbackDTO> feedbacks) {
-        return feedbacks.stream()
-                .filter(feedback -> categoryName.equalsIgnoreCase(
-                        aiUtils.classifyFeedbackIntoCategory(List.of(categoryName), feedback.getMessage()).trim()))
-                .collect(Collectors.toList());
-    }
-
-    private Map<String, List<FeedbackDTO>> classifyFeedbacksIntoCategories(
-            List<String> categories, List<FeedbackDTO> feedbacks) {
-        Map<String, List<FeedbackDTO>> categorizedFeedbacks = new HashMap<>();
-        categories.forEach(category -> categorizedFeedbacks.put(category, new ArrayList<>()));
-
-        for (FeedbackDTO feedback : feedbacks) {
-            String classifiedCategory = aiUtils.classifyFeedbackIntoCategory(categories, feedback.getMessage()).trim();
-            if (!"No Match".equalsIgnoreCase(classifiedCategory) &&
-                    categories.contains(classifiedCategory)) {
-                categorizedFeedbacks.get(classifiedCategory).add(feedback);
-            }
-        }
-        return categorizedFeedbacks;
-    }
-
+    /**
+     * Generates a concise summary using AI for a batch of feedbacks (falling back gracefully).
+     */
     private String generateSummaryForCategorizedFeedbacks(String categoryName, List<FeedbackDTO> feedbacks) {
         if (feedbacks.isEmpty()) {
             return "No specific feedback available for this category.";

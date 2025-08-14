@@ -1,126 +1,57 @@
-// ====================================
-// SignUpForm.js - Handles new user registration
-// ====================================
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { authService } from "../../services/authService"; // Backend signup API
+import authService from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 
-function SignUpForm() {
-  // ---------- State for form inputs ----------
-  const [name, setName] = useState(""); // Full name
-  const [email, setEmail] = useState(""); // Email
-  const [password, setPassword] = useState(""); // Password
-  const [confirmPassword, setConfirmPassword] = useState(""); // Confirm password
+function SignupForm() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // UI state
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const navigate = useNavigate();
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  // ---------- Handle form submit ----------
   const handleSubmit = async (e) => {
-    e.preventDefault(); // stop page refresh
+    e.preventDefault();
+    setLoading(true);
     setError("");
 
-    // Simple client-side validation
-    if (!name || !email || !password || !confirmPassword) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
     try {
-      setLoading(true);
-      // Call backend signup/register API
-      const response = await authService.signup(name, email, password);
+      // Call signup endpoint
+      await authService.signup(form.name, form.email, form.password);
 
-      // Save API key in localStorage after signup
-      localStorage.setItem("respondit_api_key", response.apiKey);
+      // Optionally, automatically login immediately after signup
+      const { token, user } = await authService.login(
+        form.email,
+        form.password
+      );
 
-      // Redirect straight to dashboard
+      // Update auth context and save session
+      login(token, user);
+
+      // Redirect to dashboard or another page
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Sign up failed. Please try again.");
+      console.error(err);
+      setError(err.message || "Sign up failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form
-      className="card"
-      onSubmit={handleSubmit}
-      style={{ maxWidth: "400px", margin: "0 auto" }}
-    >
-      {/* ---------- Form Heading ---------- */}
-      <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
-        Create Your Account
-      </h2>
-      <p style={{ textAlign: "center", color: "#666", marginBottom: "1.5rem" }}>
-        Join RESPONDIT to start transforming feedback into insights
-      </p>
-
-      {/* ---------- Name Input ---------- */}
-      <div className="form-group">
-        <label className="form-label">Full Name</label>
-        <input
-          type="text"
-          className="form-input"
-          placeholder="John Doe"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-
-      {/* ---------- Email Input ---------- */}
-      <div className="form-group">
-        <label className="form-label">Email</label>
-        <input
-          type="email"
-          className="form-input"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-
-      {/* ---------- Password Input ---------- */}
-      <div className="form-group">
-        <label className="form-label">Password</label>
-        <input
-          type="password"
-          className="form-input"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
-
-      {/* ---------- Confirm Password ---------- */}
-      <div className="form-group">
-        <label className="form-label">Confirm Password</label>
-        <input
-          type="password"
-          className="form-input"
-          placeholder="••••••••"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-      </div>
-
-      {/* ---------- Error Message ---------- */}
+    <form onSubmit={handleSubmit}>
       {error && (
         <div
           style={{
             background: "#fee2e2",
-            padding: "0.75rem",
-            borderRadius: "6px",
+            padding: "0.5rem",
             color: "#b91c1c",
+            borderRadius: 8,
             marginBottom: "1rem",
           }}
         >
@@ -128,12 +59,54 @@ function SignUpForm() {
         </div>
       )}
 
-      {/* ---------- Submit Button ---------- */}
+      <div className="form-group" style={{ marginBottom: "1rem" }}>
+        <label>Name</label>
+        <input
+          name="name"
+          type="text"
+          placeholder="Your name"
+          value={form.name}
+          onChange={handleChange}
+          required
+          style={{ borderRadius: 8 }}
+          autoComplete="name"
+        />
+      </div>
+
+      <div className="form-group" style={{ marginBottom: "1rem" }}>
+        <label>Email</label>
+        <input
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          value={form.email}
+          onChange={handleChange}
+          required
+          style={{ borderRadius: 8 }}
+          autoComplete="email"
+        />
+      </div>
+
+      <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+        <label>Password</label>
+        <input
+          name="password"
+          type="password"
+          placeholder="Your password"
+          value={form.password}
+          onChange={handleChange}
+          required
+          style={{ borderRadius: 8 }}
+          autoComplete="new-password"
+        />
+      </div>
+
       <button
         type="submit"
         className="btn btn-primary"
         style={{ width: "100%" }}
         disabled={loading}
+        aria-busy={loading}
       >
         {loading ? "Signing up..." : "Sign Up"}
       </button>
@@ -141,4 +114,4 @@ function SignUpForm() {
   );
 }
 
-export default SignUpForm;
+export default SignupForm;

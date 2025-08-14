@@ -1,17 +1,34 @@
 // src/services/feedbackService.js
-
 import api from "./api";
 
 export const feedbackService = {
-  getDashboardStats: async () => {
-    const res = await api.get("/dashboard/stats");
-    return res.data; // Expect { totalFeedback, activeProducts, averageRating, totalUsers }
+  getRecentStats: async () => {
+    const apiKey = localStorage.getItem("respondit_api_key");
+    const res = await api.get("/insights/api/feedback/stats/recent", {
+      headers: { "X-API-KEY": apiKey },
+    });
+    return res.data;
   },
 
-  getInsights: async (productId) => {
-    // If productId is provided, get insights for that product
-    const url = productId ? `/products/${productId}/insights` : `/insights`;
-    const res = await api.get(url);
+  getProductSummaries: async () => {
+    const apiKey = localStorage.getItem("respondit_api_key");
+    const res = await api.get("/insights/dashboard", {
+      headers: { "X-API-KEY": apiKey },
+    });
     return res.data;
+  },
+
+  getInsightSummary: async () => {
+    const apiKey = localStorage.getItem("respondit_api_key");
+    const res = await api.get("/insights/summary", {
+      headers: { "X-API-KEY": apiKey },
+    });
+    return res.data;
+  },
+
+  getFeedbackTrends: async () => {
+    const apiKey = localStorage.getItem("respondit_api_key");
+    // Adjust when you have endpoint implemented
+    return null;
   },
 };

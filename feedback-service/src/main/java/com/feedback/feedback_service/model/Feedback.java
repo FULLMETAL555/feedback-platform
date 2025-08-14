@@ -32,9 +32,25 @@ public class Feedback {
     @JoinColumn(name="product_id",nullable = false)
     private Product product;
 
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category; // or just Long categoryId if you prefer pure ID
+
     @PrePersist
     public void prePersist(){
         this.submittedAt = LocalDateTime.now();
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public Category getCategory() {
+        return category;
     }
 
     public void setType(String type) {

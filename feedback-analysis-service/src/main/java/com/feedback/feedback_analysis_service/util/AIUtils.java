@@ -114,19 +114,32 @@ public class AIUtils {
                 .append("\n- Keeps the summary concise (2-3 lines)")
                 .append("\n\nReturn only the updated summary text, no explanations.");
 
-        try {
-            GenerateContentResponse response = geminiClient.models.generateContent(
-                    "gemini-2.5-flash",
-                    prompt.toString(),
-                    null
-            );
+        int retry=3;
+        while(retry-- >0){
+            try {
+                GenerateContentResponse response = geminiClient.models.generateContent(
+                        "gemini-2.5-flash",
+                        prompt.toString(),
+                        null
+                );
 
-            String updatedSummary = response.text();
-            return updatedSummary != null ? updatedSummary.trim() : existingSummary;
-        } catch (Exception e) {
-            log.error("Error generating incremental summary for category '{}': {}", categoryName, e.getMessage(), e);
-            return existingSummary; // Return existing summary on error
+                String updatedSummary = response.text();
+                return updatedSummary != null ? updatedSummary.trim() : existingSummary;
+            } catch (Exception e) {
+                log.error("Error generating incremental summary for category '{}': {}", categoryName, e.getMessage(), e);
+                if(e.getMessage()!=null || e.getMessage().contains("429") && retry>0 ){
+                    try {
+                        log.warn("Rate limit again hit. Waiting 15 seconds before continuing...");
+                        Thread.sleep(15000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+
+            }
         }
+        return existingSummary; // Return existing summary on error
     }
 
 }
