@@ -54,6 +54,7 @@ public class AIUtils {
                 );
 
                 String result = response.text();
+                System.out.println("RESULT :" + result);
                 return result != null ? result.trim() : "No Match";
             } catch (Exception e) {
                 log.error("Error classifying feedback: {}", e.getMessage(), e);
@@ -124,13 +125,14 @@ public class AIUtils {
                 );
 
                 String updatedSummary = response.text();
+
                 return updatedSummary != null ? updatedSummary.trim() : existingSummary;
             } catch (Exception e) {
                 log.error("Error generating incremental summary for category '{}': {}", categoryName, e.getMessage(), e);
                 if(e.getMessage()!=null || e.getMessage().contains("429") && retry>0 ){
                     try {
                         log.warn("Rate limit again hit. Waiting 15 seconds before continuing...");
-                        Thread.sleep(15000);
+                        Thread.sleep(30000);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         break;

@@ -5,7 +5,7 @@ function StatsCards({ stats }) {
   const {
     totalFeedbacks = 0,
     avgRating = 0,
-    productCount = 0,
+    numberOfProducts = 0,
     positivePercentage = 0,
   } = stats;
 
@@ -22,7 +22,7 @@ function StatsCards({ stats }) {
     },
     {
       label: "Products",
-      value: productCount,
+      value: numberOfProducts,
       icon: "📦",
     },
     {

@@ -1,78 +1,112 @@
-// =============================================
-// ProductList.js - Clean product list card
-// =============================================
+// ProductList.js
+import React, { useState } from "react";
 
-import React, { useEffect, useState } from "react";
-import { productService } from "../../services/productService";
+function ProductList({ products = [], onAddClick, onSelectProduct }) {
+  const [search, setSearch] = useState("");
 
-function ProductList({ onAddClick }) {
-  const [products, setProducts] = useState([]);
+  const filtered = products.filter((prod) =>
+    prod.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const data = await productService.getProducts();
-        setProducts(data);
-      } catch (err) {
-        console.error("Error loading products", err);
-      }
-    }
-    loadProducts();
-  }, []);
+  // Theme colors
+  const BORDER_COLOR = "#f3eee9";
+  const BOX_SHADOW = "rgba(73, 51, 36, 0.07)";
+  const TEXT_PRIMARY = "#493324";
+  const TEXT_SECONDARY = "#ab9876";
+  const BUTTON_BG = "#c9a36fff";
+  const BUTTON_HOVER_BG = "#bb7f23";
 
   return (
-    <div className="card" style={{ paddingBottom: "1rem" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <h3 style={{ margin: 0, color: "var(--respondit-dark)" }}>
-          Your Products
-        </h3>
-        <button
-          className="btn btn-primary"
-          style={{ padding: "0.5rem 1.2rem" }}
-          onClick={onAddClick}
-        >
-          ➕ New Product
-        </button>
-      </div>
-      {products.length === 0 ? (
-        <p style={{ color: "#888", textAlign: "center", margin: "1rem 0" }}>
-          No products yet. Add one to get started.
-        </p>
-      ) : (
-        <ul
+    <div>
+      {/* Search and Add Button Row */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mb-6 gap-3">
+        <input
+          type="text"
+          placeholder="Search products..."
+          className="flex-1 rounded-lg px-3 py-2 focus:outline-none transition"
           style={{
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
+            border: `1px solid ${BORDER_COLOR}`,
+            backgroundColor: "#fff",
+            color: TEXT_PRIMARY,
           }}
-        >
-          {products.map((p) => (
-            <li
-              key={p.id}
-              style={{
-                borderBottom: "1px solid #eee",
-                padding: "0.75rem 0",
-                marginBottom: "0.7rem",
-              }}
-            >
-              <div style={{ fontWeight: 600, color: "var(--respondit-brown)" }}>
-                {p.name}
-              </div>
-              <div style={{ color: "#555", fontSize: "0.97rem" }}>
-                {p.description}
-              </div>
-              <small style={{ color: "#a3946a" }}>Product ID: {p.id}</small>
-            </li>
-          ))}
-        </ul>
-      )}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onFocus={(e) =>
+            (e.target.style.boxShadow = `0 0 0 3px ${BUTTON_BG}66`)
+          }
+          onBlur={(e) => (e.target.style.boxShadow = "none")}
+        />
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="rounded-lg px-4 py-2 font-medium transition text-white"
+            style={{ backgroundColor: BUTTON_BG }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = BUTTON_HOVER_BG)
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = BUTTON_BG)
+            }
+          >
+            + Add Product
+          </button>
+        )}
+      </div>
+
+      {/* Product Cards List */}
+      <ul>
+        {filtered.length === 0 && (
+          <li
+            className="text-center py-8"
+            style={{ color: TEXT_SECONDARY, fontWeight: 500 }}
+          >
+            No products found.
+          </li>
+        )}
+        {filtered.map((product) => (
+          <li
+            key={product.id}
+            onClick={() => onSelectProduct && onSelectProduct(product)}
+            className="rounded-xl cursor-pointer transition"
+            style={{
+              backgroundColor: "#fff",
+              border: `1px solid ${BORDER_COLOR}`,
+              boxShadow: `0 2px 8px 0 ${BOX_SHADOW}`,
+              padding: "1rem",
+              marginBottom: "1rem",
+              color: TEXT_PRIMARY,
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.boxShadow = `0 4px 24px 0 ${BOX_SHADOW}`)
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.boxShadow = `0 2px 8px 0 ${BOX_SHADOW}`)
+            }
+          >
+            <div className="flex justify-between items-center">
+              <span
+                className="font-semibold"
+                style={{ fontSize: "1.08rem", color: TEXT_PRIMARY }}
+              >
+                {product.name}
+              </span>
+              {product.category && (
+                <span
+                  className="text-xs ml-4"
+                  style={{ color: TEXT_SECONDARY }}
+                >
+                  {product.category}
+                </span>
+              )}
+            </div>
+            {product.description && (
+              <p className="mt-1 text-sm" style={{ color: "#81634b" }}>
+                {product.description}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

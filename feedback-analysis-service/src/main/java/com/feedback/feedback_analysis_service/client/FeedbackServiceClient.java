@@ -39,6 +39,6 @@ public interface FeedbackServiceClient {
     List<String> getExistingCategories(@PathVariable("productId") Long productId);
 
     @PutMapping("/feedback/{id}/category")
-    void updateFeedbackCategory(@PathVariable("id") Long feedbackId, @RequestParam("categoryId") Long categoryId);
+    void updateFeedbackCategory(@PathVariable("id") Long feedbackId, @RequestParam(value = "categoryId",required = false) Long categoryId);
 
 }

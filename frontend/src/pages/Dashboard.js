@@ -8,15 +8,16 @@ import InsightPanel from "../components/dashboard/InsightPanel";
 import LineChartComponent from "../components/dashboard/LineChartComponent";
 import PieChartComponent from "../components/dashboard/PieChartComponent";
 import ProductTable from "../components/dashboard/ProductTable";
+import RecentFeedbackList from "../components/dashboard/RecentFeedbackList";
 
 function Dashboard() {
-  const [stats, setStats] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [insights, setInsights] = useState([]);
+  const [kpiStats, setKpiStats] = useState(null);
+  const [sentimentDist, setSentimentDist] = useState([]);
+  const [categoryInsights, setCategoryInsights] = useState([]);
+  const [productPerformance, setProductPerformance] = useState([]);
+  const [recentFeedback, setRecentFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [feedbackTrends, setFeedbackTrends] = useState(null);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -24,19 +25,20 @@ function Dashboard() {
         setLoading(true);
         setError(null);
 
-        // Parallel fetches
-        const [statsRes, productsRes, insightsRes, trendsRes] =
+        const [kpiRes, sentimentRes, insightsRes, productsRes, recentRes] =
           await Promise.all([
-            feedbackService.getRecentStats(),
-            feedbackService.getProductSummaries(),
-            feedbackService.getInsightSummary(),
-            feedbackService.getFeedbackTrends(), // might be null or optional
+            feedbackService.getKpiStats(),
+            feedbackService.getSentimentDistribution(),
+            feedbackService.getCategoryInsights(),
+            feedbackService.getProductPerformance(),
+            feedbackService.getRecentFeedback(),
           ]);
 
-        setStats(statsRes);
-        setProducts(productsRes);
-        setInsights(insightsRes || []);
-        setFeedbackTrends(trendsRes);
+        setKpiStats(kpiRes);
+        setSentimentDist(sentimentRes || []);
+        setCategoryInsights(insightsRes || []);
+        setProductPerformance(productsRes || []);
+        setRecentFeedback(recentRes || []);
       } catch (err) {
         console.error("Dashboard data loading error:", err);
         setError("Failed to load dashboard data. Please try again later.");
@@ -44,7 +46,6 @@ function Dashboard() {
         setLoading(false);
       }
     }
-
     loadDashboardData();
   }, []);
 
@@ -65,10 +66,10 @@ function Dashboard() {
         {loading && <p>Loading dashboard data...</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {!loading && !error && stats && (
+        {!loading && !error && kpiStats && (
           <>
             {/* KPI Cards */}
-            <StatsCards stats={stats} />
+            <StatsCards stats={kpiStats} />
 
             {/* Charts Section */}
             <section
@@ -79,33 +80,14 @@ function Dashboard() {
                 marginTop: "3rem",
               }}
             >
-              {/* Feedback Trends (optional) */}
-              {feedbackTrends ? (
-                <LineChartComponent
-                  labels={feedbackTrends.months}
-                  feedbackCounts={feedbackTrends.feedbackCounts}
-                  averageRatings={feedbackTrends.averageRatings}
-                />
-              ) : (
-                <div
-                  style={{
-                    background: "var(--respondit-white)",
-                    borderRadius: 18,
-                    padding: "1.5rem",
-                    color: "#666",
-                    textAlign: "center",
-                    boxShadow: "0 4px 24px rgba(73,51,36,0.07)",
-                  }}
-                >
-                  Feedback trends data not available.
-                </div>
-              )}
+              {/* Feedback Line Chart */}
+              <LineChartComponent />
 
               {/* Sentiment Distribution Pie */}
-              {insights.length > 0 ? (
+              {sentimentDist.length > 0 ? (
                 <PieChartComponent
-                  labels={insights.map((i) => i.categoryName)}
-                  data={insights.map((i) => i.feedbackCount)}
+                  labels={sentimentDist.map((i) => i.sentiment)}
+                  data={sentimentDist.map((i) => i.count)}
                 />
               ) : (
                 <div
@@ -123,14 +105,39 @@ function Dashboard() {
               )}
             </section>
 
-            {/* AI Insights Panel */}
-            <section style={{ marginTop: "3rem" }}>
-              <InsightPanel insights={insights} />
+            {/* AI Insights Panel with scroll */}
+            <section
+              style={{ marginTop: "3rem" }}
+              className="border rounded-lg shadow p-4 bg-white"
+            >
+              <h2 className="font-semibold text-lg mb-3">AI Insights</h2>
+              <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
+                <InsightPanel insights={categoryInsights} />
+              </div>
             </section>
 
-            {/* Products Table */}
-            <section style={{ marginTop: "3rem" }}>
-              <ProductTable products={products} />
+            {/* Products Table with scroll */}
+            <section
+              style={{ marginTop: "3rem" }}
+              className="border rounded-lg shadow p-4 bg-white"
+            >
+              <h2 className="font-semibold text-lg mb-3">
+                Product Performance
+              </h2>
+              <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
+                <ProductTable products={productPerformance} />
+              </div>
+            </section>
+
+            {/* Recent Feedback List with scroll */}
+            <section
+              style={{ marginTop: "3rem" }}
+              className="border rounded-lg shadow p-4 bg-white"
+            >
+              <h2 className="font-semibold text-lg mb-3">Recent Feedback</h2>
+              <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
+                <RecentFeedbackList feedbacks={recentFeedback} />
+              </div>
             </section>
           </>
         )}

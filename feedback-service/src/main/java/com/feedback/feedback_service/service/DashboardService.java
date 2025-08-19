@@ -8,10 +8,11 @@ import com.feedback.feedback_service.repository.DashboardRepository;
 import com.feedback.feedback_service.model.CategorySummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+
+
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
-
-
-import java.awt.print.Pageable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +86,8 @@ public class DashboardService {
     }
 
     public List<RecentFeedbackDTO> getRecentFeedback(Long clientId, int limit) {
-        return dashboardRepo.getRecentFeedback(clientId, (Pageable) PageRequest.of(0, limit)).stream().map(obj -> {
+        Pageable pageable =  PageRequest.of(0, limit);
+        return dashboardRepo.getRecentFeedback(clientId, pageable).stream().map(obj -> {
             RecentFeedbackDTO dto = new RecentFeedbackDTO();
             dto.setDate(obj[0].toString());
             dto.setMessage((String) obj[1]);

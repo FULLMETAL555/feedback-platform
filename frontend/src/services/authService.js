@@ -36,6 +36,7 @@ const authService = {
     localStorage.setItem("authToken", token);
     localStorage.setItem("authUser", JSON.stringify(user));
     localStorage.setItem("respondit_api_key", user.apikey);
+    console.log(localStorage.getItem("respondit_api_key"));
   },
 
   logout: () => {

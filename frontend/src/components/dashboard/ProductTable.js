@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 function ProductTable({ products = [] }) {
-  const [sortKey, setSortKey] = useState("name");
+  const [sortKey, setSortKey] = useState("productName");
   const [sortAsc, setSortAsc] = useState(true);
 
   const sortedProducts = [...products].sort((a, b) => {
@@ -15,7 +15,7 @@ function ProductTable({ products = [] }) {
   });
 
   const headers = [
-    { key: "name", label: "Product" },
+    { key: "productName", label: "Product" },
     { key: "totalFeedback", label: "Total Feedback" },
     { key: "avgRating", label: "Avg Rating" },
     { key: "positivePercentage", label: "Positive %" },
@@ -50,7 +50,7 @@ function ProductTable({ products = [] }) {
                   cursor: "pointer",
                   borderBottom: "2px solid var(--respondit-brown)",
                   padding: "0.7rem",
-                  textAlign: key === "name" ? "left" : "center",
+                  textAlign: key === "productName" ? "left" : "center",
                   color: "var(--respondit-brown)",
                   userSelect: "none",
                 }}
@@ -80,11 +80,11 @@ function ProductTable({ products = [] }) {
           ) : (
             sortedProducts.map((p) => (
               <tr
-                key={p.productId || p.name}
+                key={p.productId || p.productName}
                 style={{ borderBottom: "1px solid #ddd" }}
               >
                 <td style={{ textAlign: "left", padding: "0.7rem" }}>
-                  {p.name}
+                  {p.productName}
                 </td>
                 <td style={{ textAlign: "center", padding: "0.7rem" }}>
                   {p.totalFeedback}

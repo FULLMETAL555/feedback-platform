@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,6 +34,9 @@ public class FeedbackService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @Autowired
+    private ClientService clientService;
 
     @Autowired
     private AlertService alertService;
@@ -118,10 +123,23 @@ public class FeedbackService {
     }
     public ResponseEntity<Object> updateFeedbackCategory(Long id, Long categoryId) {
         return feedbackRepository.findById(id).map(feedback -> {
-            Category categoryRef = categoryRepository.findById(categoryId).orElseThrow(()->new RuntimeException("Category not found"));
+            Category categoryRef = categoryId!=null? categoryRepository.findById(categoryId).orElseThrow(()->new RuntimeException("Category not found")):null;
             feedback.setCategory(categoryRef);
             feedbackRepository.save(feedback);
             return ResponseEntity.noContent().build();
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    public List<FeedbackTrendsDTO> getTrendsForClient(String apiKey) {
+        Client client=clientService.getClientByConvertingHashed(apiKey);
+        List<Object[]> results = feedbackRepository.findFeedbackTrendsByClientId(client.getId());
+        List<FeedbackTrendsDTO> trends = new ArrayList<>();
+        for (Object[] row : results) {
+            String period = (String) row[0];
+            long count = ((Number) row[1]).longValue();
+            double avg = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
+            trends.add(new FeedbackTrendsDTO(period, count, avg));
+        }
+        return trends;
     }
 }

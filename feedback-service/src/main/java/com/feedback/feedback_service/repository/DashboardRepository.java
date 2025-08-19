@@ -5,7 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.awt.print.Pageable;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import java.util.List;
 
 @Repository
@@ -17,15 +18,15 @@ public interface DashboardRepository extends JpaRepository<Feedback, Long> {
     @Query("SELECT COUNT(p) FROM Product p WHERE p.client.id = :clientId")
     long countProductsByClient(Long clientId);
 
-    @Query("SELECT COUNT(f) FROM Feedback f WHERE f.product.client.id = :clientId AND f.sentiment = 'positive'")
+    @Query("SELECT COUNT(f) FROM Feedback f WHERE f.product.client.id = :clientId AND f.sentiment = 'Positive'")
     long countPositiveFeedbackByClient(Long clientId);
 
     @Query(value = """
         SELECT DATE_TRUNC(:interval, f.submitted_at) AS period,
                COUNT(*) AS total_count,
-               SUM(CASE WHEN sentiment = 'positive' THEN 1 ELSE 0 END) AS positive_count,
-               SUM(CASE WHEN sentiment = 'negative' THEN 1 ELSE 0 END) AS negative_count,
-               SUM(CASE WHEN sentiment = 'neutral' THEN 1 ELSE 0 END) AS neutral_count
+               SUM(CASE WHEN sentiment = 'Positive' THEN 1 ELSE 0 END) AS positive_count,
+               SUM(CASE WHEN sentiment = 'Negative' THEN 1 ELSE 0 END) AS negative_count,
+               SUM(CASE WHEN sentiment = 'Neutral' THEN 1 ELSE 0 END) AS neutral_count
         FROM feedback f
         JOIN product p ON f.product_id = p.id
         WHERE p.client_id = :clientId
@@ -42,15 +43,15 @@ public interface DashboardRepository extends JpaRepository<Feedback, Long> {
     List<Object[]> getSentimentDistribution(Long clientId);
 
     @Query("""
-        SELECT p.name,
-               COUNT(f),
-               SUM(CASE WHEN f.sentiment='positive' THEN 1 ELSE 0 END) * 100.0 / COUNT(f),
-               MAX(f.submittedAt)
-        FROM Product p
-        LEFT JOIN Feedback f ON f.product.id = p.id
-        WHERE p.client.id = :clientId
-        GROUP BY p.name
-    """)
+    SELECT p.name,
+           COUNT(f),
+           SUM(CASE WHEN f.sentiment = 'Positive' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(f), 0),
+           MAX(f.submittedAt)
+    FROM Product p
+    LEFT JOIN Feedback f ON f.product.id = p.id
+    WHERE p.client.id = :clientId
+    GROUP BY p.name
+""")
     List<Object[]> getProductPerformance(Long clientId);
 
     @Query("""
@@ -61,4 +62,6 @@ public interface DashboardRepository extends JpaRepository<Feedback, Long> {
         ORDER BY f.submittedAt DESC
     """)
     List<Object[]> getRecentFeedback(Long clientId, Pageable pageable);
+
+
 }

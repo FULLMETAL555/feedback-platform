@@ -40,4 +40,25 @@ public interface FeedbackRepository extends JpaRepository<Feedback,Long> {
 
     List<Feedback> findByProductId(@Param("productId") Long productId);
 
+    @Query("""
+    SELECT 
+      FUNCTION('to_char', f.submittedAt, 'YYYY-MM') as period,
+      COUNT(f) as feedbackCount,
+      AVG(
+        CASE 
+          WHEN f.sentiment = 'Positive' THEN 5
+          WHEN f.sentiment = 'Neutral' THEN 3
+          WHEN f.sentiment = 'Negative' THEN 1
+          ELSE NULL
+        END
+      ) as avgRating
+    FROM Feedback f
+    WHERE f.product.client.id = :clientId
+    GROUP BY period
+    ORDER BY period ASC
+""")
+    List<Object[]> findFeedbackTrendsByClientId(@Param("clientId") Long clientId);
+
+
+
 }

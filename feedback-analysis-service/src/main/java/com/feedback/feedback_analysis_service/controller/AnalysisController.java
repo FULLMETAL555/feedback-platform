@@ -17,7 +17,7 @@ public class AnalysisController {
 //            feedbackProcessingService.processFeedbacksForProduct(productId);
 //
 //            return  ResponseEntity.ok("Analysis completed for product ID :"+ productId);
-//    }
+//
 
     @PostMapping("/generate/{productId}")
     public ResponseEntity<String> generateCategoriesAndSummaries(@PathVariable Long productId) {

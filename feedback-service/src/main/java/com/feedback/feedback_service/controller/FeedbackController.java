@@ -2,6 +2,7 @@ package com.feedback.feedback_service.controller;
 
 import com.feedback.feedback_service.dto.FeedbackRequestDTO;
 import com.feedback.feedback_service.dto.FeedbackResponseDTO;
+import com.feedback.feedback_service.dto.FeedbackTrendsDTO;
 import com.feedback.feedback_service.dto.ProductResponseDTO;
 import com.feedback.feedback_service.model.Client;
 import com.feedback.feedback_service.model.Feedback;
@@ -62,8 +63,13 @@ public class FeedbackController {
     }
 
     @PutMapping("/{id}/category")
-    public ResponseEntity<Object> updateFeedbackCategory(@PathVariable Long id, @RequestParam Long categoryId) {
+    public ResponseEntity<Object> updateFeedbackCategory(@PathVariable Long id, @RequestParam(value = "categoryId",required = false) Long categoryId) {
         return feedbackService.updateFeedbackCategory(id,categoryId);
+    }
+
+    @GetMapping("/client/trends")
+    public List<FeedbackTrendsDTO> getFeedbackTrends(@RequestHeader("X-API-KEY") String apiKey){
+        return feedbackService.getTrendsForClient(apiKey);
     }
 
 

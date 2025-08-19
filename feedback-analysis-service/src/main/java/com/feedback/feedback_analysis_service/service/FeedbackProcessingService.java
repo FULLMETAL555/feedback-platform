@@ -97,12 +97,27 @@ public class FeedbackProcessingService {
         generateAndSaveSummaries(product, savedCategories, feedbacks);
     }
 
-    // Called only if not enough categories or coverage is poor
+    /**
+     * Called only if not enough categories or coverage is poor (regenerating):
+     * - Clears categoryId on all feedback for this product
+     * - Deletes all categories and summaries for the product
+     * - Generates new categories and summaries
+     */
     private void processCategoryRegeneration(Product product, List<FeedbackDTO> allFeedbacks) {
-        // Remove old summaries and categories
+        // Step 1: Remove (nullify) category assignments for all feedback of this product
+        allFeedbacks.forEach(feedback -> {
+            try {
+                feedbackServiceClient.updateFeedbackCategory(feedback.getId(),null);
+            } catch (Exception e) {
+                log.warn("Failed to clear feedback categoryId for feedback {}: {}", feedback.getId(), e.getMessage());
+            }
+        });
+
+        // Step 2: Remove old summaries and categories
         categorySummaryRepository.deleteAllByProductId(product.getId());
         categoryRepository.deleteByProductId(product.getId());
-        // AI: Generate new categories
+
+        // Step 3: Generate new categories using AI
         List<String> newCategoryNames = categoryGenerationUtil.generateCategories(
                 product.getName(),
                 product.getDescription(),
@@ -115,7 +130,8 @@ public class FeedbackProcessingService {
                     cat.setName(catName);
                     return categoryRepository.save(cat);
                 }).toList();
-        // Assign and summarize
+
+        // Step 4: Assign new categories and generate new summaries
         generateAndSaveSummaries(product, newCategories, allFeedbacks);
     }
 

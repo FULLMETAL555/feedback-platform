@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<Category,Long> {
     List<Category> findByProductId(Long productId);
     Optional<Category> findByNameAndProductId(String name, Long productId);
-
+    Optional<Category> findById(Long id);
     void deleteByProductId(Long id);
 
     List<Category> findByProduct_Client_Id(Long clientId);
@@ -30,7 +30,9 @@ public interface CategoryRepository extends JpaRepository<Category,Long> {
                (SELECT COUNT(f2) FROM Feedback f2 WHERE f2.category.id = :categoryId))
         FROM Feedback f
         WHERE f.category.id = :categoryId
-        AND f.sentiment = 'positive'
+        AND f.sentiment = 'Positive'
     """)
     Double getPositivePercentageForCategory(Long categoryId);
+
+
 }

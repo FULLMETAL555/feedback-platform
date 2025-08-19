@@ -31,8 +31,9 @@ public class JwtAuthFilter extends OncePerRequestFilter  {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String headerAuth = request.getHeader("Authorization");
-        if (headerAuth == null || !headerAuth.startsWith("Bearer ")) {
-            System.out.println("AUTH FILTER");
+        String method = request.getMethod();
+        if (headerAuth == null || !headerAuth.startsWith("Bearer ") || "OPTIONS".equals(method)) {
+            System.out.println("AUTH FILTER Bypass");
             // Not a JWT request, skip and let other filters try
             filterChain.doFilter(request, response);
             return;

@@ -1,6 +1,9 @@
 package com.feedback.feedback_service.security;
 
+import com.feedback.feedback_service.model.Client;
+import com.feedback.feedback_service.repository.ClientRepository;
 import com.feedback.feedback_service.service.ClientService;
+import com.feedback.feedback_service.util.HashUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +28,9 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     @Autowired
     private RateLimiterService rateLimiterService;
 
+    @Autowired
+    private ClientRepository clientRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
@@ -46,8 +52,18 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         System.out.println("Context Path: " + request.getContextPath());
         System.out.println("Servlet Path: " + request.getServletPath());
 
+//        if ("OPTIONS".equals(method)) {
+//            // Create dummy authentication principal just to bypass security
+//            UsernamePasswordAuthenticationToken dummyAuth =
+//                    new UsernamePasswordAuthenticationToken("anonymous", null, Collections.emptyList());
+//            SecurityContextHolder.getContext().setAuthentication(dummyAuth);
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
+
+
         // Allow public endpoints to bypass the filter
-        if (isPublicEndpoint(path)) {
+        if (isPublicEndpoint(path) || "OPTIONS".equals(method) ) {
             System.out.println("✅ Public endpoint - bypassing filter");
             filterChain.doFilter(request, response);
             return;
@@ -56,16 +72,11 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         String serverName = request.getServerName();
         int serverPort = request.getServerPort();
         System.out.println(serverName+" "+serverPort);
-        // If this is the analysis service (port 9097), allow all requests
-//        if (serverPort == 9099) {
-//            System.out.println("✅ Analysis service - bypassing filter");
-//            filterChain.doFilter(request, response);
-//            return;
-//        }
+
         String apiKey = request.getHeader("X-API-KEY");
         System.out.println("Request apikey: " + apiKey);
 
-        if (apiKey == null || !clientService.isValidKey(apiKey)) {
+        if (apiKey == null || !clientService.isValidKey(apiKey) ) {
             System.out.println("❌ Invalid or missing API key");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
@@ -74,7 +85,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         }
 
         // Apply rate limit
-        if (!rateLimiterService.isAllowed(apiKey)) {
+        if (!rateLimiterService.isAllowed(apiKey) ) {
             System.out.println("❌ Rate limit exceeded");
             response.setStatus(429); // Use proper rate limit status code
             response.setContentType("application/json");
@@ -83,8 +94,10 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         }
 
         System.out.println("✅ API key valid - proceeding");
+        String hashApiKey= HashUtil.hashApiKey(apiKey);
+        Client client=clientRepository.findByHashedApiKey(hashApiKey).orElseThrow(()->new RuntimeException("Invalid API key"));
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(apiKey, null, Collections.emptyList());
+                new UsernamePasswordAuthenticationToken(client, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
     }

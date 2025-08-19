@@ -28,6 +28,7 @@ import "./styles/globals.css"; // Global resets, utilities
 function App() {
   return (
     // Provide auth state to the whole application
+
     <AuthProvider>
       {/* Wrap the whole app in the Router for navigation */}
       <Router>

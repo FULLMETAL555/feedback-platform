@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -30,57 +31,57 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Disable CSRF for stateless APIs
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Use stateless session management (no sessions)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // Configure URL authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/signin",
+                        .requestMatchers(
+                                "/auth/signin",
                                 "/auth/signup",
                                 "/api/public/**",
                                 "/error",
-                                // Use paths WITHOUT /api prefix (as Spring Security sees them)
                                 "/clients/register",
                                 "/clients/login",
                                 "/clients/refresh",
-                                // Swagger UI resources (both with and without /api)
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
                                 "/v3/api-docs",
-                                // Also include /api versions for safety
                                 "/api/clients/register",
                                 "/api/clients/login",
                                 "/api/clients/refresh",
                                 "/api/swagger-ui/**",
                                 "/api/swagger-ui.html",
                                 "/api/v3/api-docs/**",
-                                // Add analysis service endpoints
                                 "/analysis/**",
                                 "/api/analysis/**",
                                 "/products/addproducts/",
-                                "/feedback/submit/").permitAll()
+                                "/feedback/submit/"
+                        ).permitAll()
+
+                        // Allow all OPTIONS requests without authentication
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
+
+                // Register your authentication provider
                 .authenticationProvider(authenticationProvider())
-                // JWT filter first, will skip if no JWT token in header
+
+                // Add JWT authentication filter before UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                // API key filter next, will skip if Authorization Bearer header exists
+
+                // Add API key authentication filter also before UsernamePasswordAuthenticationFilter
                 .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-
-
-
-        // If you use API Key Auth, uncomment and configure this:
-        // .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-
-
-//        http.
-//                csrf(csrf -> csrf.disable())
-//                .authorizeHttpRequests(auth -> auth
-//                        .anyRequest().permitAll()  // Allow all requests
-//                );
-//        // Removed the filter completely
         return http.build();
     }
 
