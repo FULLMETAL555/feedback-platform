@@ -1,5 +1,6 @@
 package com.feedback.feedback_service.service;
 
+import com.feedback.feedback_service.dto.ProductInsightResponseDTO;
 import com.feedback.feedback_service.dto.ProductRequestDTO;
 import com.feedback.feedback_service.dto.ProductResponseDTO;
 import com.feedback.feedback_service.model.Client;
@@ -8,6 +9,7 @@ import com.feedback.feedback_service.repository.ClientRepository;
 import com.feedback.feedback_service.repository.ProductRepository;
 import com.feedback.feedback_service.util.HashUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -68,5 +70,13 @@ public class ProductService {
     }
     public void deleteProduct(Product product){
         productRepository.delete(product);
+    }
+
+    public ResponseEntity<ProductInsightResponseDTO> productInsight(String apiKey, long productId) {
+        Client client = clientService.getClientByConvertingHashed(apiKey);
+
+        Product product =productRepository.getReferenceById(productId);
+        return null;
+
     }
 }

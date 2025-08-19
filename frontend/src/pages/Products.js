@@ -1,25 +1,54 @@
 // Products.js
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 import ProductList from "../components/products/ProductList";
 import CreateProduct from "../components/products/CreateProduct";
+import { productService } from "../services/productService";
 
 function Products() {
   const [showForm, setShowForm] = useState(false);
   const [reloadFlag, setReloadFlag] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  //fetch products
+  useEffect(() => {
+    let isCurrent = true;
+
+    async function fetchProducts() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await productService.getProducts();
+        if (isCurrent) setProducts(data);
+      } catch (err) {
+        if (isCurrent) {
+          setError(err.message || "Failed to fetch products.");
+          setProducts([]);
+        }
+      } finally {
+        if (isCurrent) setLoading(false);
+      }
+    }
+
+    fetchProducts();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [reloadFlag]);
   // Called when a new product is created
   const handleProductCreated = () => {
     setShowForm(false);
-    setReloadFlag(!reloadFlag); // refresh ProductList
+    setReloadFlag(!reloadFlag); // trigger reload
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fcf8f4]">
-      {" "}
-      {/* Cream background */}
       <Header />
+
       <main className="flex-1 px-4 py-12 container mx-auto max-w-3xl">
         <h1
           className="mb-8 text-3xl font-semibold"
@@ -39,7 +68,17 @@ function Products() {
             boxShadow: "0 4px 24px rgba(73,51,36,0.07)",
           }}
         >
-          <ProductList onAddClick={() => setShowForm(true)} key={reloadFlag} />
+          {loading && (
+            <p className="text-center text-gray-500">Loading products...</p>
+          )}
+          {error && <p className="text-center text-red-600">Error: {error}</p>}
+          {!loading && !error && (
+            <ProductList
+              products={products}
+              onAddClick={() => setShowForm(true)}
+            />
+          )}
+
           {showForm && (
             <div className="mt-6 border-t border-[#f3eee9] pt-6">
               <CreateProduct onProductCreated={handleProductCreated} />
@@ -47,6 +86,7 @@ function Products() {
           )}
         </div>
       </main>
+
       <Footer />
     </div>
   );

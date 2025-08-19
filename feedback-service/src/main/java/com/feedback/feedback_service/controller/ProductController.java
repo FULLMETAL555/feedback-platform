@@ -1,5 +1,6 @@
 package com.feedback.feedback_service.controller;
 
+import com.feedback.feedback_service.dto.ProductInsightResponseDTO;
 import com.feedback.feedback_service.dto.ProductRequestDTO;
 import com.feedback.feedback_service.dto.ProductResponseDTO;
 import com.feedback.feedback_service.model.Client;
@@ -48,5 +49,8 @@ public class ProductController {
 
     }
 
-    @GetMapping("/")
+    @GetMapping("/{productId}/insights")
+    public ResponseEntity<ProductInsightResponseDTO> productInsight(@RequestHeader("X-API-KEY") String apiKey,long productId){
+        return productService.productInsight(apiKey,productId);
+    }
 }

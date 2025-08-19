@@ -1,24 +1,27 @@
-// ProductList.js
 import React, { useState } from "react";
 
 function ProductList({ products = [], onAddClick, onSelectProduct }) {
   const [search, setSearch] = useState("");
 
-  const filtered = products.filter((prod) =>
-    prod.name.toLowerCase().includes(search.toLowerCase())
+  // Filter products by name or description
+  const filtered = products.filter(
+    (prod) =>
+      prod.name.toLowerCase().includes(search.toLowerCase()) ||
+      (prod.description &&
+        prod.description.toLowerCase().includes(search.toLowerCase()))
   );
 
-  // Theme colors
+  // Your RESPONDIT theme colors
   const BORDER_COLOR = "#f3eee9";
   const BOX_SHADOW = "rgba(73, 51, 36, 0.07)";
   const TEXT_PRIMARY = "#493324";
   const TEXT_SECONDARY = "#ab9876";
-  const BUTTON_BG = "#c9a36fff";
+  const BUTTON_BG = "#c2965aff";
   const BUTTON_HOVER_BG = "#bb7f23";
 
   return (
     <div>
-      {/* Search and Add Button Row */}
+      {/* Search and Add Button */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mb-6 gap-3">
         <input
           type="text"
@@ -53,7 +56,7 @@ function ProductList({ products = [], onAddClick, onSelectProduct }) {
         )}
       </div>
 
-      {/* Product Cards List */}
+      {/* Product List */}
       <ul>
         {filtered.length === 0 && (
           <li
@@ -90,14 +93,10 @@ function ProductList({ products = [], onAddClick, onSelectProduct }) {
               >
                 {product.name}
               </span>
-              {product.category && (
-                <span
-                  className="text-xs ml-4"
-                  style={{ color: TEXT_SECONDARY }}
-                >
-                  {product.category}
-                </span>
-              )}
+              {/* If you want to display clientId, uncomment below */}
+              {/* <span className="text-xs ml-4" style={{ color: TEXT_SECONDARY }}>
+                {product.clientId}
+              </span> */}
             </div>
             {product.description && (
               <p className="mt-1 text-sm" style={{ color: "#81634b" }}>
