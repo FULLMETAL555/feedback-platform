@@ -1,108 +1,160 @@
-// =========================================
-// APIKeyManager.js - Manage API Keys with clean UI
-// Styled to match RESPONDIT branding and cards
-// =========================================
-
 import React, { useState, useEffect } from "react";
-import { apiKeyService } from "../../services/apiKeyService";
 
 function APIKeyManager() {
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    async function fetchKeys() {
-      try {
-        const data = await apiKeyService.getAPIKeys();
-        setKeys(data);
-      } catch (err) {
-        setError("Failed to load API keys.");
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const fetchKeys = () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = localStorage.getItem("respondit_api_key");
+      if (data) {
+        const parsedKeys = Array.isArray(data) ? data : [data];
+        setKeys(parsedKeys);
+      } else {
+        setKeys([]);
       }
+    } catch (err) {
+      setError("Failed to load API keys.");
+      console.error(err);
+      setKeys([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchKeys();
   }, []);
 
-  const handleCreateKey = async () => {
-    try {
-      setLoading(true);
-      const newKey = await apiKeyService.createAPIKey();
-      setKeys([newKey, ...keys]);
-    } catch (err) {
-      setError("Failed to create API key.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteKey = async (keyId) => {
-    if (!window.confirm("Are you sure you want to delete this key?")) return;
-    try {
-      setLoading(true);
-      await apiKeyService.deleteAPIKey(keyId);
-      setKeys(keys.filter((k) => k.id !== keyId));
-    } catch (err) {
-      setError("Failed to delete API key.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="card" style={{ padding: "2rem" }}>
-      <h2 style={{ marginBottom: "1rem", color: "var(--respondit-dark)" }}>
+    <div
+      className="card"
+      style={{
+        padding: "2rem",
+        borderRadius: 18,
+        boxShadow: "0 4px 24px rgba(73,51,36,0.07)",
+        backgroundColor: "#fff",
+        maxWidth: 600,
+        margin: "0 auto",
+      }}
+    >
+      <h2
+        style={{
+          marginBottom: "1.5rem",
+          color: "var(--respondit-dark)",
+          fontWeight: 600,
+          fontSize: "1.5rem",
+          textAlign: "center",
+          fontFamily: "'Nunito Sans', sans-serif",
+        }}
+      >
         Your API Keys
       </h2>
 
       {error && (
-        <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>
+        <div
+          style={{
+            color: "#b00020",
+            backgroundColor: "#fcebea",
+            padding: "1rem",
+            borderRadius: 8,
+            marginBottom: "1.5rem",
+            fontWeight: 500,
+          }}
+          role="alert"
+        >
+          {error}
+        </div>
       )}
 
       <button
         className="btn btn-primary"
-        onClick={handleCreateKey}
+        onClick={fetchKeys}
         disabled={loading}
-        style={{ marginBottom: "1.5rem" }}
+        style={{
+          display: "block",
+          margin: "0 auto 1.5rem auto",
+          padding: "0.75rem 1.5rem",
+          backgroundColor: "var(--respondit-amber, #dd9227)",
+          color: "#fff",
+          border: "none",
+          borderRadius: 10,
+          fontWeight: 600,
+          fontSize: "1rem",
+          cursor: loading ? "not-allowed" : "pointer",
+          boxShadow: "0 4px 12px rgba(221,146,39,0.4)",
+          transition: "background-color 0.3s ease",
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor =
+            "var(--respondit-amber-dark, #8d7a5dff)")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor =
+            "var(--respondit-amber, #a19480ff)")
+        }
+        aria-label="Refresh API keys"
       >
-        + Create New API Key
+        {loading ? "Refreshing..." : "Refresh API Key"}
       </button>
 
       {loading && !keys.length ? (
-        <p>Loading API keys...</p>
+        <p
+          style={{
+            textAlign: "center",
+            color: "#8c7b5a",
+            fontWeight: 500,
+            fontFamily: "'Nunito Sans', sans-serif",
+          }}
+          aria-live="polite"
+        >
+          Loading API keys...
+        </p>
       ) : keys.length === 0 ? (
-        <p>No API keys yet. Create one to get started.</p>
+        <p
+          style={{
+            textAlign: "center",
+            color: "#ab9876",
+            fontWeight: 500,
+            fontFamily: "'Nunito Sans', sans-serif",
+          }}
+          aria-live="polite"
+        >
+          No API keys available. Please obtain your key from your account
+          dashboard.
+        </p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {keys.map(({ id, label, key }) => (
+        <ul
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            fontFamily: "'Courier New', Courier, monospace",
+            fontSize: "1rem",
+            color: "var(--respondit-brown)",
+            maxHeight: 200,
+            overflowY: "auto",
+            borderTop: "1px solid #eee",
+            borderBottom: "1px solid #eee",
+            borderRadius: 10,
+          }}
+          aria-label="List of API keys"
+        >
+          {keys.map((key, index) => (
             <li
-              key={id}
+              key={index}
               style={{
-                borderBottom: "1px solid #eee",
-                padding: "0.75rem 0",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontFamily: "'Courier New', Courier, monospace",
-                fontSize: "0.95rem",
-                color: "var(--respondit-brown)",
+                padding: "0.75rem 1rem",
+                borderBottom:
+                  index !== keys.length - 1 ? "1px solid #eee" : "none",
+                userSelect: "all",
+                wordBreak: "break-all",
               }}
             >
-              <span>{label || "(No Label)"}</span>
-              <code style={{ userSelect: "all" }}>{key}</code>
-              <button
-                className="btn btn-secondary"
-                onClick={() => handleDeleteKey(id)}
-                style={{ padding: "0.3rem 0.7rem", fontSize: "0.85rem" }}
-                disabled={loading}
-                aria-label={`Delete API key ${label || id}`}
-              >
-                Delete
-              </button>
+              {typeof key === "string" ? key : key.key}
             </li>
           ))}
         </ul>

@@ -65,4 +65,5 @@ public class ClientController {
         String newKey = clientService.refreshApiKey(clientId);
         return ResponseEntity.ok("Your new API Key: " + newKey);
     }
+    
 }
