@@ -31,6 +31,15 @@ public class FeedbackProcessingService {
 
     private static final double UNCLASSIFIED_THRESHOLD = 0.10;
 
+
+    public void analyzeFeedbackForProduct(Long productId) {
+        // Your analysis logic here:
+        // - fetch feedback by productId
+        // - perform analysis
+        // - save insights or update product/feedback state
+        System.out.println("Analyzing feedback for product: " + productId);
+    }
+
     /**
      * Main entry point: Processes all feedback for a given product.
      */
