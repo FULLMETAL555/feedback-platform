@@ -27,15 +27,27 @@ jobs:
           docker build -t fullm3tal/frontend-service:latest ./frontend
           docker push fullm3tal/frontend-service:latest
 
-      - name: Build and push feedback-service image
-        run: |
-          docker build -t fullm3tal/feedback-service:latest ./feedback-service
-          docker push fullm3tal/feedback-service:latest
+      - name: Build data-anonymization service
+        working-directory: ./data-anonymization-service
+        run: mvn clean package
 
       - name: Build and push anonymize-service image
         run: |
           docker build -t fullm3tal/anonymize-service:latest ./data-anonymization-service
           docker push fullm3tal/anonymize-service:latest
+
+      - name: Build feedback service
+        working-directory: ./feedback-service
+        run: mvn clean package
+
+      - name: Build and push feedback-service image
+        run: |
+          docker build -t fullm3tal/feedback-service:latest ./feedback-service
+          docker push fullm3tal/feedback-service:latest
+
+      - name: Build feedback-analysis service
+        working-directory: ./feedback-analysis-service
+        run: mvn clean package
 
       - name: Build and push analysis-service image
         run: |
