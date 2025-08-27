@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+    postgres:
+        image: postgres:17.5
+        container_name: postgres-db
+        environment:
+            POSTGRES_DB: feedback_db
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: password
+        ports:
+            - "5433:5432" # Host port 5433 mapped to container 5432
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+
+    feedback-service:
+        image: feedback-service
+        depends_on:
+            - postgres
+            - anonymize-service
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/feedback_db
+            SPRING_DATASOURCE_USERNAME: postgres
+            SPRING_DATASOURCE_PASSWORD: password
+            ANONYMIZATION_SERVICE_URL: http://anonymize-service:8083/api/anonymize
+        ports:
+            - "9099:9099"
+
+    anonymize-service:
+        image: anonymize-service
+        depends_on:
+            - postgres
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/feedback_db
+            SPRING_DATASOURCE_USERNAME: postgres
+            SPRING_DATASOURCE_PASSWORD: password
+        ports:
+            - "8083:8083"
+
+    analysis-service:
+        image: analysis-service
+        depends_on:
+            - postgres
+            - feedback-service
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/feedback_db
+            SPRING_DATASOURCE_USERNAME: postgres
+            SPRING_DATASOURCE_PASSWORD: password
+            FEEDBACK_SERVICE_URL: http://feedback-service:9099/api
+        ports:
+            - "9097:9097"
+
+    frontend:
+        image: frontend-service
+        depends_on:
+            - feedback-service
+            - anonymize-service
+        environment:
+            REACT_APP_API_BASE_URL: http://feedback-service:9099/api
+        ports:
+            - "80:80" # Exposes frontend on host port 80
+
+volumes:
+    pgdata:
