@@ -1,3 +1,3 @@
 anonymization:
   service:
-    url: http://localhost:8083/api/anonymize
+    url: ${ANONYMIZATION_SERVICE_URL:http://localhost:8083/api/anonymize}

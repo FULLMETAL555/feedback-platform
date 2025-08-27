@@ -60,4 +60,4 @@ feedback:
   api:
     key: 5T3B2lqEL3SEoBFrPTTf78KDP58XoyCq84smpEnxh8w
   service:
-    url: http://localhost:9099/api  # Change this to your feedback service base URL
+    url: ${FEEDBACK_SERVICE_URL:http://localhost:9099/api}  # Change this to your feedback service base URL
