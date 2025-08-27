@@ -68,6 +68,14 @@ jobs:
           docker build -t fullm3tal/feedback-service:latest ./feedback-service
           docker push fullm3tal/feedback-service:latest
 
+      - name: Build and install feedback-service
+        working-directory: ./feedback-service
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/feedback_db
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: password
+        run: mvn clean install
+
       - name: Build feedback-analysis service
         working-directory: ./feedback-analysis-service
         env:
