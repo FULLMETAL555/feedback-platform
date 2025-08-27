@@ -9,6 +9,21 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: feedback_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -29,6 +44,10 @@ jobs:
 
       - name: Build data-anonymization service
         working-directory: ./data-anonymization-service
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/feedback_db
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: password
         run: mvn clean package
 
       - name: Build and push anonymize-service image
@@ -38,6 +57,10 @@ jobs:
 
       - name: Build feedback service
         working-directory: ./feedback-service
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/feedback_db
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: password
         run: mvn clean package
 
       - name: Build and push feedback-service image
@@ -47,6 +70,10 @@ jobs:
 
       - name: Build feedback-analysis service
         working-directory: ./feedback-analysis-service
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/feedback_db
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: password
         run: mvn clean package
 
       - name: Build and push analysis-service image
