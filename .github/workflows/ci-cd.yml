@@ -24,20 +24,20 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          docker build -t your-dockerhub-username/frontend-service:latest ./frontend
-          docker push your-dockerhub-username/frontend-service:latest
+          docker build -t fullm3tal/frontend-service:latest ./frontend
+          docker push fullm3tal/frontend-service:latest
 
       - name: Build and push feedback-service image
         run: |
-          docker build -t your-dockerhub-username/feedback-service:latest ./feedback-service
-          docker push your-dockerhub-username/feedback-service:latest
+          docker build -t fullm3tal/feedback-service:latest ./feedback-service
+          docker push fullm3tal/feedback-service:latest
 
       - name: Build and push anonymize-service image
         run: |
-          docker build -t your-dockerhub-username/anonymize-service:latest ./data-anonymization-service
-          docker push your-dockerhub-username/anonymize-service:latest
+          docker build -t fullm3tal/anonymize-service:latest ./data-anonymization-service
+          docker push fullm3tal/anonymize-service:latest
 
       - name: Build and push analysis-service image
         run: |
-          docker build -t your-dockerhub-username/analysis-service:latest ./feedback-analysis-service
-          docker push your-dockerhub-username/analysis-service:latest
+          docker build -t fullm3tal/analysis-service:latest ./feedback-analysis-service
+          docker push fullm3tal/analysis-service:latest
