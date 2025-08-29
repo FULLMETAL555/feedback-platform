@@ -9,12 +9,12 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: password
         ports:
-            - "5433:5432" # Host port 5433 mapped to container 5432
+            - "5433:5432"
         volumes:
             - pgdata:/var/lib/postgresql/data
 
     feedback-service:
-        image: feedback-service
+        image: fullm3tal/feedback-service:latest
         depends_on:
             - postgres
             - anonymize-service
@@ -27,7 +27,7 @@ services:
             - "9099:9099"
 
     anonymize-service:
-        image: anonymize-service
+        image: fullm3tal/anonymize-service:latest
         depends_on:
             - postgres
         environment:
@@ -38,7 +38,7 @@ services:
             - "8083:8083"
 
     analysis-service:
-        image: analysis-service
+        image: fullm3tal/analysis-service:latest
         depends_on:
             - postgres
             - feedback-service
@@ -51,14 +51,14 @@ services:
             - "9097:9097"
 
     frontend:
-        image: frontend-service
+        image: fullm3tal/frontend-service:latest
         depends_on:
             - feedback-service
             - anonymize-service
         environment:
             REACT_APP_API_BASE_URL: http://feedback-service:9099/api
         ports:
-            - "80:80" # Exposes frontend on host port 80
+            - "80:80"
 
 volumes:
     pgdata:
