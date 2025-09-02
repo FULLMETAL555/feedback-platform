@@ -39,7 +39,7 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          docker build -t fullm3tal/frontend-service:latest ./frontend
+          docker build --build-arg REACT_APP_API_BASE_URL=/api -t fullm3tal/frontend-service:latest ./frontend
           docker push fullm3tal/frontend-service:latest
 
       - name: Build data-anonymization service
