@@ -18,6 +18,8 @@ const authService = {
 
   login: async (email, password) => {
     try {
+      console.log("API base URL:", process.env.REACT_APP_API_BASE_URL);
+
       // Make sure this path matches your backend; adjust "/auth/signin" if needed
       const res = await api.post("/auth/signin", { email, password });
       const data = res.data;
