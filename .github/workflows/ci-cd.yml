@@ -39,7 +39,7 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          docker build -t fullm3tal/frontend-service:latest ./frontend
+          docker build --no-cache -t fullm3tal/frontend-service:latest .
           docker push fullm3tal/frontend-service:latest
 
       - name: Build data-anonymization service
