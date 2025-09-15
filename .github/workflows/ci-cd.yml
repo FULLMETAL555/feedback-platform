@@ -37,6 +37,27 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Clean frontend build and cache
+        run: |
+          rm -rf frontend/build frontend/node_modules/.cache frontend/node_modules
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Verify build output does not contain localhost
+        run: |
+          if grep -r 'REACT_APP_API_BASE_URL||"http://localhost:9099/api' frontend/build/static/js/; then
+            echo "ERROR: Found unexpected references to localhost in the build files."
+            exit 1
+          fi
+
       - name: Build and push frontend image
         run: |
           docker build --no-cache -t fullm3tal/frontend-service:latest ./frontend
